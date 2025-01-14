@@ -111,24 +111,24 @@ app.get('/api/weather', async (req, res) => {
       const currentWeatherUrl = `${BASE_URL}/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
       const currentWeatherResponse = await axios.get(currentWeatherUrl);
   
-      // Fetch 5-day forecast (3-hour intervals)
+      // Fetch 5-day forecast
       const forecastUrl = `${BASE_URL}/forecast?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
       const forecastResponse = await axios.get(forecastUrl);
   
-      // Extract relevant data
+      // Extract current weather data
       const currentWeather = {
         city: currentWeatherResponse.data.name,
         temperature: currentWeatherResponse.data.main.temp,
         humidity: currentWeatherResponse.data.main.humidity,
         conditions: currentWeatherResponse.data.weather[0].main,
         icon: `https://openweathermap.org/img/wn/${currentWeatherResponse.data.weather[0].icon}@2x.png`,
-        lat: currentWeatherResponse.data.coord.lat, // Latitude
-        lon: currentWeatherResponse.data.coord.lon, // Longitude
+        lat: currentWeatherResponse.data.coord.lat,
+        lon: currentWeatherResponse.data.coord.lon,
       };
   
-      // Extract 5-day forecast data (grouped by day)
+      // Process forecast data
       const forecastData = forecastResponse.data.list.reduce((acc, item) => {
-        const date = item.dt_txt.split(' ')[0]; // Extract date (YYYY-MM-DD)
+        const date = item.dt_txt.split(' ')[0];
         if (!acc[date]) {
           acc[date] = {
             date,
@@ -140,17 +140,27 @@ app.get('/api/weather', async (req, res) => {
         return acc;
       }, {});
   
-      // Convert forecast data to an array
-      const forecast = Object.values(forecastData).slice(0, 7); // Limit to 7 days
+      const forecast = Object.values(forecastData).slice(0, 7);
   
-      // Save search history for authenticated users
+      // Save search history for authenticated users with weather data
       if (userId) {
         await User.findByIdAndUpdate(userId, {
-          $push: { searchHistory: { destination: city } },
+          $push: {
+            searchHistory: {
+              destination: city,
+              weather: {
+                temperature: currentWeather.temperature,
+                humidity: currentWeather.humidity,
+                conditions: currentWeather.conditions,
+                icon: currentWeather.icon,
+                lat: currentWeather.lat,
+                lon: currentWeather.lon
+              }
+            }
+          }
         });
       }
   
-      // Send response
       res.json({
         currentWeather,
         forecast,
@@ -299,6 +309,160 @@ app.post('/api/favorites', authMiddleware, async (req, res) => {
       res.json({ message: 'Destination added to favorites', favorites: user.favorites });
     } catch (error) {
       res.status(500).json({ error: 'Failed to add to favorites' });
+    }
+  });
+
+  app.get('/api/weather', async (req, res) => {
+  const { city } = req.query;
+  const userId = req.session.userId;
+
+  if (!city) {
+    return res.status(400).json({ error: 'City parameter is required' });
+  }
+
+  try {
+    // Fetch current weather
+    const currentWeatherUrl = `${BASE_URL}/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
+    const currentWeatherResponse = await axios.get(currentWeatherUrl);
+
+    // Fetch 5-day forecast
+    const forecastUrl = `${BASE_URL}/forecast?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
+    const forecastResponse = await axios.get(forecastUrl);
+
+    // Extract current weather data
+    const currentWeather = {
+      city: currentWeatherResponse.data.name,
+      temperature: currentWeatherResponse.data.main.temp,
+      humidity: currentWeatherResponse.data.main.humidity,
+      conditions: currentWeatherResponse.data.weather[0].main,
+      icon: `https://openweathermap.org/img/wn/${currentWeatherResponse.data.weather[0].icon}@2x.png`,
+      lat: currentWeatherResponse.data.coord.lat,
+      lon: currentWeatherResponse.data.coord.lon,
+    };
+
+    // Process forecast data
+    const forecastData = forecastResponse.data.list.reduce((acc, item) => {
+      const date = item.dt_txt.split(' ')[0];
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          temperature: item.main.temp,
+          conditions: item.weather[0].main,
+          icon: `https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`,
+        };
+      }
+      return acc;
+    }, {});
+
+    const forecast = Object.values(forecastData).slice(0, 7);
+
+    // Save search history for authenticated users with weather data
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        $push: {
+          searchHistory: {
+            destination: city,
+            weather: {
+              temperature: currentWeather.temperature,
+              humidity: currentWeather.humidity,
+              conditions: currentWeather.conditions,
+              icon: currentWeather.icon,
+              lat: currentWeather.lat,
+              lon: currentWeather.lon
+            }
+          }
+        }
+      });
+    }
+
+    res.json({
+      currentWeather,
+      forecast,
+    });
+  } catch (error) {
+    console.error('Weather API Error:', error.response?.data || error);
+    res.status(500).json({
+      error: 'Failed to fetch weather data',
+      details: error.response?.data?.message || error.message,
+    });
+  }
+});
+
+// Delete favorite endpoint
+app.delete('/api/favorites/:destination', authMiddleware, async (req, res) => {
+    const userId = req.session.userId;
+    const { destination } = req.params;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Remove the favorite with the matching destination
+      user.favorites = user.favorites.filter(
+        fav => fav.destination.toLowerCase() !== decodeURIComponent(destination).toLowerCase()
+      );
+      await user.save();
+  
+      res.json({ 
+        message: 'Favorite removed successfully', 
+        favorites: user.favorites 
+      });
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      res.status(500).json({ error: 'Failed to remove favorite' });
+    }
+  });
+  
+  // Delete search history entry endpoint
+  app.delete('/api/search-history/:id', authMiddleware, async (req, res) => {
+    const userId = req.session.userId;
+    const { id } = req.params;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Remove the search history entry with the matching ID
+      user.searchHistory = user.searchHistory.filter(
+        search => search._id.toString() !== id
+      );
+      await user.save();
+  
+      res.json({ 
+        message: 'Search history entry removed successfully', 
+        searchHistory: user.searchHistory 
+      });
+    } catch (error) {
+      console.error('Error removing search history entry:', error);
+      res.status(500).json({ error: 'Failed to remove search history entry' });
+    }
+  });
+  
+  // Clear all search history endpoint (optional)
+  app.delete('/api/search-history', authMiddleware, async (req, res) => {
+    const userId = req.session.userId;
+  
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Clear all search history
+      user.searchHistory = [];
+      await user.save();
+  
+      res.json({ 
+        message: 'Search history cleared successfully', 
+        searchHistory: user.searchHistory 
+      });
+    } catch (error) {
+      console.error('Error clearing search history:', error);
+      res.status(500).json({ error: 'Failed to clear search history' });
     }
   });
 
