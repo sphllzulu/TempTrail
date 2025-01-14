@@ -13,10 +13,11 @@ import {
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import mapboxgl from 'mapbox-gl'; // Import Mapbox GL JS
+import mapboxgl from 'mapbox-gl';
+// import 'dotenv/config';
 
 // Set Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1Ijoic3BobGx6dWx1IiwiYSI6ImNtNXdreTFvMDBhNWMybHNjMDh4NDV4b3EifQ.hnFotPUmBuiHsbbLbtfTrg';
+mapboxgl.accessToken = import.meta.env.VITE_TOKEN
 
 const Weather = () => {
   const [city, setCity] = useState('');
