@@ -12,10 +12,10 @@ const app= express()
 const PORT = process.env.PORT || 5000;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY; 
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
-
+const FOURSQUARE_API_KEY=process.env.FOURSQUARE_API_KEY
 
 //middleware
-app.use(cors({ origin: `http://localhost:${PORT}`, credentials: true }));
+app.use(cors({ origin: `http://localhost:5173`, credentials: true }));
 app.use(express.json())
 app.use(session({
     //used to encrypt the session
@@ -122,6 +122,8 @@ app.get('/api/weather', async (req, res) => {
         humidity: currentWeatherResponse.data.main.humidity,
         conditions: currentWeatherResponse.data.weather[0].main,
         icon: `https://openweathermap.org/img/wn/${currentWeatherResponse.data.weather[0].icon}@2x.png`,
+        lat: currentWeatherResponse.data.coord.lat, // Latitude
+        lon: currentWeatherResponse.data.coord.lon, // Longitude
       };
   
       // Extract 5-day forecast data (grouped by day)
@@ -161,7 +163,89 @@ app.get('/api/weather', async (req, res) => {
       });
     }
   });
+
+  //activities
+ // Updated activities endpoint with proper error handling and category mapping
+app.get('/api/activities', async (req, res) => {
+    const { city, weatherCondition } = req.query;
   
+    if (!city || !weatherCondition) {
+      return res.status(400).json({ error: 'City and weather condition are required' });
+    }
+  
+    try {
+      // Step 1: Get latitude and longitude of the city using OpenWeatherMap API
+      const weatherResponse = await axios.get(
+        `${BASE_URL}/weather?q=${city}&appid=${WEATHER_API_KEY}`
+      );
+      const { lat, lon } = weatherResponse.data.coord;
+  
+      // Step 2: Determine activity categories based on weather condition
+      // Using Foursquare category IDs for more accurate results
+      // https://developer.foursquare.com/docs/build-with-foursquare/categories/
+      let categoryIds = [];
+      switch (weatherCondition.toLowerCase()) {
+        case 'sunny':
+        case 'clear':
+          categoryIds = '16032,16000,16015'; // Parks, Outdoor Activities, Hiking
+          break;
+        case 'rain':
+        case 'clouds':
+          categoryIds = '10025,13003,10035'; // Museums, Coffee Shops, Movie Theaters
+          break;
+        case 'snow':
+          categoryIds = '16026,10056'; // Ski Areas, Sports & Recreation
+          break;
+        default:
+          categoryIds = '16000,13065'; // Outdoor Activities, Restaurants
+      }
+  
+      // Step 3: Fetch activities from Foursquare API with proper headers
+      const foursquareResponse = await axios.get(
+        `https://api.foursquare.com/v3/places/search`,
+        {
+          params: {
+            ll: `${lat},${lon}`,
+            categories: categoryIds,
+            limit: 5,
+            radius: 5000, // 5km radius
+            sort: 'RATING'
+          },
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': FOURSQUARE_API_KEY
+          }
+        }
+      );
+  
+      // Step 4: Format and return activity suggestions with error handling for missing data
+      const activities = foursquareResponse.data.results.map((place) => ({
+        name: place.name,
+        address: place.location?.formatted_address || 'Address not available',
+        rating: place.rating || 'Not rated',
+        // Handle cases where photos might not be available
+        photo: place.photos?.[0] 
+          ? `${place.photos[0].prefix}300x300${place.photos[0].suffix}`
+          : null,
+        url: place.website || `https://foursquare.com/v/${place.fsq_id}`
+      }));
+  
+      res.json({ activities });
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      
+      // More detailed error response
+      const errorMessage = error.response?.data?.message || error.message;
+      const statusCode = error.response?.status || 500;
+      
+      res.status(statusCode).json({ 
+        error: 'Failed to fetch activities',
+        details: errorMessage,
+        // Don't expose API keys in error messages
+        source: error.config?.url?.replace(FOURSQUARE_API_KEY, '[REDACTED]')
+      });
+    }
+  });
 
   
   // Get search history
