@@ -99,7 +99,9 @@ app.post('/api/auth/logout',(req,res)=>{
 
 //Weather routes
 app.get('/api/weather', async (req, res) => {
+  //destructuring by extracting the city from the request query
     const { city } = req.query;
+  //retrieves userId from the session which stores userId when user logs in if the user is authenticated
     const userId = req.session.userId;
   
     if (!city) {
