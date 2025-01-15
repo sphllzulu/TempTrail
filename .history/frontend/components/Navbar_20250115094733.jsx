@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { Link as RouterLink } from 'react-router-dom';
 import {
   AppBar,
@@ -124,11 +124,4 @@ function Navbar() {
                 {item.text}
               </MenuItem>
             ))}
-          </Menu>
-        </Box>
-      </Toolbar>
-    </AppBar>
-  );
-}
-
-export default Navbar;
+         

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+// import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   AppBar,
@@ -43,7 +43,7 @@ function Navbar() {
     <AppBar 
       position="static" 
       sx={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.40)',
+        backgroundColor: theme.palette.primary.main,
         color: '#fff'
       }}
     >
