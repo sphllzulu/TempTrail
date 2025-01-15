@@ -1,0 +1,7 @@
+
+.s-bar {
+    width: 600px;
+height: 60px;
+flex-shrink: 0;
+background-color: aqua;
+}
