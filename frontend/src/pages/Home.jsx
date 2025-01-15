@@ -4,19 +4,31 @@ import Searchbar from '../components/Searchbar';
 import WeatherCard from '../components/WeatherCard';
 import Activities from '../components/Activities';
 
-// Hero component that serves as a background container for weather-related components
 const Hero = () => {
   return (
     <Box
       sx={{
         width: '100%',
-        minHeight: '80vh', // Reduced from 100vh to make room for Activities
-        background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+        minHeight: '80vh',
+        backgroundImage: 'url("/unsplash.jpg")', // Add background image
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         pt: 4,
+        '&::before': {  // Add an overlay to ensure text remains readable
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)', // Darkens the background image
+          zIndex: 0,
+        },
       }}
     >
       <Container maxWidth="lg">
@@ -38,7 +50,6 @@ const Hero = () => {
   );
 };
 
-// Updated Home component with Activities section
 function Home() {
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -46,8 +57,8 @@ function Home() {
       <Box 
         sx={{ 
           width: '100%',
-          py: 6, // Add padding top and bottom
-          bgcolor: 'background.default' // Use theme background color
+          py: 6,
+          bgcolor: 'background.default'
         }}
       >
         <Container maxWidth="lg">
