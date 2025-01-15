@@ -40,13 +40,7 @@ function Navbar() {
   ];
 
   return (
-    <AppBar 
-      position="static" 
-      sx={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.40)',
-        color: '#fff'
-      }}
-    >
+    
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         {/* Logo */}
         <Typography

@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-function Navbar() {
+function Navigation() {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -43,7 +43,7 @@ function Navbar() {
     <AppBar 
       position="static" 
       sx={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.40)',
+        backgroundColor: theme.palette.primary.main,
         color: '#fff'
       }}
     >
@@ -131,4 +131,4 @@ function Navbar() {
   );
 }
 
-export default Navbar;
+export default Navigation;

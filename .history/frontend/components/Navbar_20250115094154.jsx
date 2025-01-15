@@ -43,11 +43,11 @@ function Navbar() {
     <AppBar 
       position="static" 
       sx={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.40)',
+        backgroundColor: theme.palette.primary.main,
         color: '#fff'
       }}
     >
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
+      <Toolbar sx={{ justifyContent: 'space-between' back }}>
         {/* Logo */}
         <Typography
           variant="h6"

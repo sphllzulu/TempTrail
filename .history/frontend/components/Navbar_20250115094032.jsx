@@ -43,7 +43,7 @@ function Navbar() {
     <AppBar 
       position="static" 
       sx={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.40)',
+        backgroundColor: theme.palette.primary.main,
         color: '#fff'
       }}
     >
@@ -74,7 +74,7 @@ function Navbar() {
               sx={{
                 color: '#fff',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                  backgroundColor: 'r)'
                 }
               }}
             >
