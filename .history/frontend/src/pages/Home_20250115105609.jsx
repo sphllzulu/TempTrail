@@ -1,13 +1,12 @@
 import './Home.css';
 import Weather from '../components/Wearther';
-import WeatherSearch from '../components/WeartherSearch';
 const Home = () => {
   return (
     <div className="app-container">
       
       <div className="hero-section">
         <div className="search-bar">
-          <WeatherSearch/>
+          
         </div>
 
         <h3 className="hero-heading">

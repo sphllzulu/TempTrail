@@ -7,7 +7,7 @@ const Home = () => {
       
       <div className="hero-section">
         <div className="search-bar">
-          <WeatherSearch/>
+          <WeatherSearch
         </div>
 
         <h3 className="hero-heading">
